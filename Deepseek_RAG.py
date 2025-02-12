@@ -1,4 +1,8 @@
 from langchain.prompts import PromptTemplate
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import TextLoader
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_groq import ChatGroq
 import streamlit as st
 import os
@@ -11,16 +15,37 @@ api = st.sidebar.text_input("Please enter your Groq API Key here:", type='passwo
 if api:
     llm = ChatGroq(model='deepseek-r1-distill-qwen-32b', api_key=api)
 
+# Load and chunk the document
+loader = TextLoader('data.txt')
+docs = loader.load()
+
+# Split the docs
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+chunks = text_splitter.split_documents(docs)
+
+# Initialize embedding and store in FAISS vector StopIteration
+embedding_model = HuggingFaceBgeEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
+vector_store = FAISS.from_documents(chunks, embedding_model)
+
+prompt_template = PromptTemplate.from_template(
+    """
+    You are an AI assistant with access to retrieved knowledge. Based on the following context, answer the question,
+    if you can't find the answer to that question you just say i can't find the answer in the given context,
+    but you can give answer by what you know saying "here is my answer":  
+    \n---  
+    {context}  
+    \n---  
+    \nUser Question: {query}
+    """
+)
+
 query = st.text_input("Enter you query: ")
 
 if query and api:
-    prompt_template = PromptTemplate.from_template("""You are a science expert. Answer concisely with examples, 
-                                               and You are a logical AI. Explain step by step.
-                                               Explain {topic} in simple terms with examples.
-                                               you can use emojies and make it look good.
-                                                give long answers if needed.""")
-    
-    prompt = prompt_template.format(topic=query)
+    docs = vector_store.similarity_search(query, k=3)
+    retrieved_context = '/n'.join([doc.page_content for doc in docs])    
+
+    prompt = prompt_template.format(context=retrieved_context, query=query)
     
     ai_message = llm.invoke([prompt])
     content = ai_message.content

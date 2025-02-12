@@ -5,3 +5,5 @@ pyPDF
 langchain_deepseek
 langchain-groq
 streamlit
+langchain_community
+faiss-cpu

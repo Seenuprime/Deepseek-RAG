@@ -33,7 +33,8 @@ if api:
         st.sidebar.write(f"{file_loaded.name} loaded successfully!")
 
         if 'pdf_text' not in st.session_state:
-            file = fitz.open(file_loaded)
+            file_bytes = file_loaded.read()  # Read file as bytes
+            file = fitz.open("pdf", io.BytesIO(file_bytes))
             text = ""
             for page in file:
                 text += page.get_text()

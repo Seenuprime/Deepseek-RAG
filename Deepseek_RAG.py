@@ -76,11 +76,11 @@ if api:
             """
         )
 
-        query = st.text_input("Enter you query: ")
+        query = st.text_input("Enter your query: ")
 
         if query and api:
             docs = vector_store.similarity_search(query, k=3)
-            retrieved_context = '/n'.join([doc.page_content for doc in docs])    
+            retrieved_context = '\n'.join([doc.page_content for doc in docs])    
 
             prompt = prompt_template.format(context=retrieved_context, query=query)
             

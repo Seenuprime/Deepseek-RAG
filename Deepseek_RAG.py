@@ -7,6 +7,7 @@ from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_groq import ChatGroq
 import streamlit as st
 import fitz
+import io
 import os
 from dotenv import load_dotenv
 load_dotenv()

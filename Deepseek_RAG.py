@@ -33,21 +33,25 @@ embedding_model = HuggingFaceBgeEmbeddings(model_name='sentence-transformers/all
 vector_store = FAISS.from_documents(chunks, embedding_model)
 
 prompt_template = PromptTemplate.from_template(
-       """
-    Answer the user's question based on the context. 
-    If the answer is not in the context, say "I cannot find the answer to that question in the given context."
-    Make your answer clear and concise.
+     """
 
-    Context:
-    ```
-    {context}
-    ```
+    You are an AI assistant with access to retrieved knowledge. Based on the following context, answer the question,
 
-    Question:
-    ```
-    {query}
-    ```
-    """
+    make answers look attractive, and more readable,
+
+    if you can't find the answer to that question you just say i can't find the answer in the given context,
+
+    but you can give answer by what you know saying "here is my answer":  
+
+    \n---  
+
+    {context}  
+
+    \n---  
+
+    \nUser Question: {query}
+
+    """ 
 )
 
 query = st.text_input("Enter you query: ")

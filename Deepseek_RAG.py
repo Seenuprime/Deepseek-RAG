@@ -32,17 +32,19 @@ if api:
     if file_loaded:
         st.sidebar.write(f"{file_loaded.name} loaded successfully!")
 
-        file = fitz.open(file_loaded)
-        text = ""
-        for page in file:
-            text += page.get_text()
+        if 'pdf_text' not in st.session_state:
+            file = fitz.open(file_loaded)
+            text = ""
+            for page in file:
+                text += page.get_text()
 
-        # Split the docs
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50, separators='/n')
-        text_split = text_splitter.split_text(text)
+            st.session_state['pdf_text'] = text
+    
+    if 'pdf_text' in st.session_state:
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50, separators='\n')
+        text_split = text_splitter.split_text(st.session_state['pdf_text'])
         chunks = text_splitter.create_documents(text_split)
 
-        # Initialize embedding and store in FAISS vector StopIteration
         embedding_model = HuggingFaceBgeEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
         vector_store = FAISS.from_documents(chunks, embedding_model)
 

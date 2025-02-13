@@ -1,3 +1,4 @@
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.prompts import PromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -15,12 +16,16 @@ api = st.sidebar.text_input("Please enter your Groq API Key here:", type='passwo
 if api:
     llm = ChatGroq(model='deepseek-r1-distill-qwen-32b', api_key=api)
 
-# Load and chunk the document
-loader = TextLoader('data.txt')
-docs = loader.load()
+# # Load the text file and chunk the document
+# loader = TextLoader('data.txt')
+# docs = loader.load()
+
+# Load the Pdf file and chunk the document
+pdf_loader = PyMuPDFLoader('attention_all_youneed.pdf')
+docs = pdf_loader.load()
 
 # Split the docs
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50, separators='/n')
 chunks = text_splitter.split_documents(docs)
 
 # Initialize embedding and store in FAISS vector StopIteration
@@ -28,14 +33,20 @@ embedding_model = HuggingFaceBgeEmbeddings(model_name='sentence-transformers/all
 vector_store = FAISS.from_documents(chunks, embedding_model)
 
 prompt_template = PromptTemplate.from_template(
-    """
-    You are an AI assistant with access to retrieved knowledge. Based on the following context, answer the question,
-    if you can't find the answer to that question you just say i can't find the answer in the given context,
-    but you can give answer by what you know saying "here is my answer":  
-    \n---  
-    {context}  
-    \n---  
-    \nUser Question: {query}
+       """
+    Answer the user's question based on the context. 
+    If the answer is not in the context, say "I cannot find the answer to that question in the given context."
+    Make your answer clear and concise.
+
+    Context:
+    ```
+    {context}
+    ```
+
+    Question:
+    ```
+    {query}
+    ```
     """
 )
 
